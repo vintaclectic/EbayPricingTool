@@ -1,159 +1,181 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<title>eBay Search Results</title>
-<style type="text/css">body { font-family: arial,sans-serif;} </style>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
-<link rel="stylesheet" href="styles.css"/>
+  <title>EADB | Ebay Sold Item Analysis</title>
+  <style type="text/css">
+    body {
+      font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    }
+  </style>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="shortcut icon" type="image/png" href="images/ebayPricingLogoII.png" />
 </head>
+
 <body>
 
-<div id="mainBanner">
-<h1 id = "title" onclick="changetext()">eBay Search Results</h1>
-<div id = "averagePrice"></div>
+  <div id="mainBanner">
+    <img src="images/ebayPricingLogo.png" a href="/index.html">
+    <h2 id="title" onClick="changetext()">EADB | Ebay Sold Item Analysis</h2>
 
-  <div>
-    <label for="search">Search for an item </label>
-    <div id="searchDiv">
-      <input type="text" id="search"
-            placeholder="Go on now, what are you waiting for?">
+    <div>
+      <label for="search" color='#e15e5b'>Search for an item </label>
+      <div id="searchDiv">
+        <input type="text" id="search" placeholder="Enter Item">
+      </div>
+      <div id="minPriceDiv">
+        <input type="number" id="minPrice" placeholder="Minimum Price?" onClick="0">
+      </div>
     </div>
-    <div id="minPriceDiv">
-    <input type="number" id="minPrice"
-          placeholder="Minimum Price?">
+    <div>
+      <button id="submit" onClick="updateList()">Submit</button>
+      <button id="refresh" onClick="location.href=location.href">Refresh</button>
+    </div><br>
+    <div id="averagePrice"></div>
+  </div>
+  <div id="graph">
+    <canvas id="mycanvas" width="50px" height="40px"></canvas>
+  </div>
+  <div id="results">
+    <div id="results">
     </div>
-  </div>
-  <div>
-    <button id="submit" onclick="updateList()">Submit</button>
-  </div>
-</div>
-  <div id = "graph">
-    <canvas id="mycanvas" width ="50px" height="40px"></canvas>
-  </div>
-  <div id = "results">
-<div id="results">
-</div>
-<div>
-  <h3 id="itemOutput">
-  </h3>
-</div>
+    <div>
+      <h3 id="itemOutput">
+      </h3>
+    </div>
   </div>
 
 </body>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.4/Chart.min.js"></script>
 <script>
-var priceData = [];
-var sum=0;
-var count=0;
-var avgPrice=0;
-// Parse the response and build an HTML table to display search results
-function changetext(){
-    document.getElementById("title").innerHTML = "It Worked!"
-}
 
-function _cb_findItemsByKeywords(root) {
+  // Create our number formatter.
+  var formatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    // the default value for minimumFractionDigits depends on the currency
+    // and is usually already 2
+  });
+
+  var priceData = [];
+  var sum = 0;
+  var count = 0;
+  var avgPrice = 0;
+  // Parse the response and build an HTML table to display search results
+  function changetext() {
+    document.getElementById("title").innerHTML = "It Worked!"
+  }
+
+  function _cb_findItemsByKeywords(root) {
     var items = root.findCompletedItemsResponse[0].searchResult[0].item || [];
     document.getElementById("itemOutput").innerHTML = JSON.stringify(items[0]);
     var html = [];
     html.push('<table width="100%" border="0" cellspacing="0" cellpadding="3"><tbody>');
     for (var i = 0; i < items.length; ++i) {
-      var item     = items[i];
-      var title    = item.title;
-      var pic      = item.galleryURL;
+      var item = items[i];
+      var title = item.title;
+      var pic = item.galleryURL;
       var viewitem = item.viewItemURL;
       // var price    = item.paymentMethod;
       // var sellState = 1;
       var price = item.sellingStatus[0].currentPrice[0].__value__;
       var sellState = item.sellingStatus[0].sellingState;
+      if (sellState == "EndedWithSales") {
+        var sellState = 'Sold';
+      }
       if (null != title && null != viewitem) {
         priceData.push(parseFloat(price));
-        sum+=parseFloat(price);
-        count+=1;
+        sum += parseFloat(price);
+        count += 1;
         html.push('<tr><td>' + '<img src="' + pic + '" border="0">' + '</td>' +
-        '<td><a href="' + viewitem + '" target="_blank">' + title + '</a></td>'+
-        '<td>'+ price+'</td>' + '<td>'+ sellState+'</td>' /*+'<td><button onclick="moreLikeThis()">More Like This!</button>'+
-        +'</td>'*/+'</tr>');
+          '<td><a href="' + viewitem + '" target="_blank">' + title + '</a></td>' +
+          '<td>' + price + '</td>' + '<td>' + sellState + '</td>' /*+'<td><button onclick="moreLikeThis()">More Like This!</button>'+
+        +'</td>'*/+ '</tr>');
       }
     }
 
-      // Split the price data into 10 intervals, have frequencies within intervals
-      var ub = Math.max.apply(null,priceData);
-      var lb = Math.min.apply(null,priceData);
-      var increment = (ub-lb)/10;
-      var intervals = [];
-      var frequency = [];
-      intervals.push(lb);
-      for(var j=1;j<11;++j){
-        var counter=0;
-        // Make names for labels,
-        // var name = "label '"+i+"'";
-        intervals.push(intervals[j-1]+increment);
-        for(var i = 0;i<priceData.length;++i){
-          if(priceData[i]>intervals[j-1] && priceData[i]<=intervals[j]){
-            counter+=1;
-          }
+    // Split the price data into 10 intervals, have frequencies within intervals
+    var ub = Math.max.apply(null, priceData);
+    var lb = Math.min.apply(null, priceData);
+    var increment = (ub - lb) / 10;
+    var intervals = [];
+    var frequency = [];
+    intervals.push(lb);
+    for (var j = 1; j < 11; ++j) {
+      var counter = 0;
+      // Make names for labels,
+      // var name = "label '"+i+"'";
+      intervals.push(intervals[j - 1] + increment);
+      for (var i = 0; i < priceData.length; ++i) {
+        if (priceData[i] > intervals[j - 1] && priceData[i] <= intervals[j]) {
+          counter += 1;
         }
-        frequency.push(counter);
       }
-    avgPrice = sum/count;
+      frequency.push(counter);
+    }
+    avgPrice = sum / count;
     html.push('</tbody></table>');
     document.getElementById("title").innerHTML = frequency;
     document.getElementById("results").innerHTML = html.join("");
     document.getElementById("averagePrice").innerHTML = avgPrice;
-    makeGraph(intervals,frequency);
+    makeGraph(intervals, frequency);
 
   }  // End _cb_findItemsByKeywords() function
-function updateList(){
+  function updateList() {
     var keywrd = encodeURIComponent(document.getElementById("search").value);
     var minimumPrice = encodeURIComponent(document.getElementById("minPrice").value);
     document.getElementById("title").innerHTML = keywrd;
     var url = "http://svcs.ebay.com/services/search/FindingService/v1";
-      url += "?OPERATION-NAME=findCompletedItems";
-      url += "&SERVICE-VERSION=1.0.0";
-      url += "&SECURITY-APPNAME=NitinTan-AverageS-PRD-15d80d3bd-86aa9832";
-      url += "&GLOBAL-ID=EBAY-US";
-      url += "&RESPONSE-DATA-FORMAT=JSON";
-      url += "&callback=_cb_findItemsByKeywords";
-      url += "&REST-PAYLOAD";
-      url += "&keywords=";
-      url += keywrd;
-      url += "&itemFilter(0).name=MinPrice";
-      url += "&itemFilter(0).value="
-      url += minimumPrice;
-      url += "&itemFilter(1).name=SoldItemsOnly"
-      url += "&itemFilter(1).value=true"
-      url += "&paginationInput.entriesPerPage=50";
-      // Submit the request
-    s=document.createElement('script'); // create script element
-    s.src= url;
+    url += "?OPERATION-NAME=findCompletedItems";
+    url += "&SERVICE-VERSION=1.0.0";
+    url += "&SECURITY-APPNAME=NitinTan-AverageS-PRD-15d80d3bd-86aa9832";
+    url += "&GLOBAL-ID=EBAY-US";
+    url += "&RESPONSE-DATA-FORMAT=JSON";
+    url += "&callback=_cb_findItemsByKeywords";
+    url += "&REST-PAYLOAD";
+    url += "&keywords=";
+    url += keywrd;
+    url += "&itemFilter(0).name=MinPrice";
+    url += "&itemFilter(0).value="
+    url += minimumPrice;
+    url += "&itemFilter(1).name=SoldItemsOnly"
+    url += "&itemFilter(1).value=true"
+    url += "&paginationInput.entriesPerPage=50";
+    // Submit the request
+    s = document.createElement('script'); // create script element
+    s.src = url;
     document.body.appendChild(s);
-}
+  }
 
-function makeGraph(intervals,frequency){
-  console.log("ready!");
-  var ctx = $('#mycanvas').get(0).getContext('2d');
-  //pie chart data
-  var labelNames=["Corn Flower","Light Green","Orange"];
-  // var numbers=[270,50,40];
-  var backgroundcolor=["cornflowerblue","lightgreen","orange"];
-  var highlightcolor=["lightskyblue","yellowgreen","darkorange"];
-  //draw
-  var piechart = new Chart(ctx,
-    { type:'bar',
-      data: {
-        labels:intervals,
-        datasets:[{
-          backgroundColor:backgroundcolor,
-          highlight:highlightcolor,
-          data:frequency
-        }]
-      }
-  });
-};
+  function makeGraph(intervals, frequency) {
+    console.log("ready!");
+    var ctx = $('#mycanvas').get(0).getContext('2d');
+    //pie chart data
+    var labelNames = ["Corn Flower", "Light Green", "Orange"];
+    // var numbers=[270,50,40];
+    var backgroundcolor = ["cornflowerblue", "lightgreen", "orange"];
+    var highlightcolor = ["lightskyblue", "yellowgreen", "darkorange"];
+    //draw
+    var piechart = new Chart(ctx,
+      {
+        type: 'bar',
+        data: {
+          labels: intervals,
+          datasets: [{
+            backgroundColor: backgroundcolor,
+            highlight: highlightcolor,
+            data: frequency
+          }]
+        }
+      });
+  };
 
-function moreLikeThis(){
+  function moreLikeThis() {
 
-}
+  }
 
 </script>
 
