@@ -1,39 +1,53 @@
-h1{
-  color:blue;
+h1,h2{
+  color:#2c2c42;
+  text-align:left;
 }
 
 #searchDiv,#minPriceDiv{
   max-width:100%
 }
 
+#submit,#refresh{
+  background-color:#e15e5b;
+  border-radius: 4px 4px 4px 4px;
+  border-color:#e15e5b;
+  box-shadow: 2px;
+  width:0 margin;
+}
+
+#submit:hover,#refresh:hover{
+  background-color:#2c2c42;
+  color:#e15e5b;
+  border-color:#2c2c42;
+
+}
 #graph{
   max-width: 50%;
-  margin:auto;
+  margin: 0 auto;
+  background-color:linear-gradient(to bottom, #c6c6c6, #e15e5b);
 }
 #title{
   text-align: center;
 }
 
 #searchDiv, #minPriceDiv{
-  width:200%;
-  justify-content:center;
+  width:100%;
+  text-align:left;
 }
 
  #search, #minPrice {
-   width:200%;
-   /* margin:auto; */
-   padding:12px 20px;
-   margin:8px 8px;
-   border: 1px solid red;
-   border-radius:10px;
+   widows: 150px;
+   margin: 0 auto;
+   padding:8px 16px;
+   margin:4px 4px;
+   border: 1px solid #e15e5b;
+   border-radius: 4px 4px 4px 4px;
    display:block;
    float:none;
-   text-align:center;
-
  }
 
  #mainBanner{
-   background:linear-gradient(to bottom, royalblue, white);
+   background:linear-gradient(to bottom, #e15e5b, #355c7d);
    background-repeat:no-repeat;
    background-size:auto;
    /* margin:auto; */
@@ -42,17 +56,17 @@ h1{
    display: flex;
    align-items:center;
    flex-direction: column;
-   justify-content: center;
+   /*justify-content: center;*/
 
  }
 
 
 #results{
-  background:linear-gradient(to top, royalblue, white);
+  background:linear-gradient(to bottom, #e15e5b, #355c7d);
   background-repeat:no-repeat;
   background-size:auto;
   /* margin:auto; */
-  margin: -8px -8px;
+  margin: 0 margin;
   padding:40px;
   /* display: flex; */
   align-items:center;
